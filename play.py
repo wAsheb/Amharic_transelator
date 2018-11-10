@@ -6,16 +6,6 @@ Created on Sat Nov 10 09:48:02 2018
 """
 
 #import sys
-#
-#sys.dont_write_bytecode = True
-#PYTHONDONTWRITEBYTECODE = 1
-#
-#import vlc
-#
-## p = vlc.MediaPlayer("./exclamation.mp3")
-#p = vlc.MediaPlayer("./bizunesh.mp3")
-#p.play()
-#p.play()
 
 import pygame
 
