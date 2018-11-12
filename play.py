@@ -17,7 +17,7 @@ def playSound(filename):
         continue
 
 def main():
-#    playSound("./exclamation.mp3")
+
     playSound("./bizunesh.mp3")
 
 
