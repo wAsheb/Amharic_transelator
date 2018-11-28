@@ -1,31 +1,36 @@
 
+# coding: utf-8
 
-# We will begin by loading in some functions that we have provided for you in `rnn_utils`. Specifically, you have access to functions such as `rnn_forward` and `rnn_backward` which are equivalent to those you've implemented in the previous assignment. 
+# # Character level language model -land
 
 # In[1]:
 
 import numpy as np
 from utils import *
 import random
+import io
 
-
-# ## 1 - Problem Statement
-# 
 # ### 1.1 - Dataset and Preprocessing
-# 
-# Run the following cell to read the dataset 
+def read():
+    with io.open('amharic.txt', mode='r', encoding='utf-8') as f:
+        return f.read()
+
 # In[2]:
 
-data = open('dinos.txt', 'r').read()
-data= data.lower()
+data = read() #open('dinos.txt', 'r').read()
+#data= data.lower()
 chars = list(set(data))
 data_size, vocab_size = len(data), len(chars)
 print('There are %d total characters and %d unique characters in your data.' % (data_size, vocab_size))
 
 
-# The characters are a-z (26 characters) plus the "\n" (or newline character), which in this assignment plays a role similar to the `<EOS>` (or "End of sentence") token we had discussed in lecture, only here it indicates the end of the dinosaur name rather than the end of a sentence. In the cell below, we create a python dictionary (i.e., a hash table) to map each character to an index from 0-26. We also create a second python dictionary that maps each index back to the corresponding character character. This will help you figure out what index corresponds to what character in the probability distribution output of the softmax layer. Below, `char_to_ix` and `ix_to_char` are the python dictionaries. 
+# The characters are ሀ - ፐ   (34*7 characters) plus the "\n" (or newline character), which in this here plays a role similar to the `<EOS>` (or "End of sentence") token, 
+# In the cell below, we create a python dictionary (i.e., a hash table) to map each character to an index from 0-26. 
+# We also create a second python dictionary that maps each index back to the corresponding character character. 
+# This will help you figure out what index corresponds to what character in the probability distribution output of the softmax layer.
+# Below, `char_to_ix` and `ix_to_char` are the python dictionaries. 
 
-# In[3]:
+# In[8]:
 
 char_to_ix = { ch:i for i,ch in enumerate(sorted(chars)) }
 ix_to_char = { i:ch for i,ch in enumerate(sorted(chars)) }
@@ -33,9 +38,7 @@ print(ix_to_char)
 
 
 # ### 1.2 - Overview of the model
-# 
-# Your model will have the following structure: 
-# 
+
 # - Initialize parameters 
 # - Run the optimization loop
 #     - Forward propagation to compute the loss function
@@ -43,11 +46,8 @@ print(ix_to_char)
 #     - Clip the gradients to avoid exploding gradients
 #     - Using the gradients, update your parameter with the gradient descent update rule.
 # - Return the learned parameters 
-
-
-# In[9]:
-
-### GRADED FUNCTION: clip
+#
+# In[10]:
 
 def clip(gradients, maxValue):
     '''
@@ -63,36 +63,17 @@ def clip(gradients, maxValue):
     
     dWaa, dWax, dWya, db, dby = gradients['dWaa'], gradients['dWax'], gradients['dWya'], gradients['db'], gradients['dby']
    
-    ### START CODE HERE ###
+   
     # clip to mitigate exploding gradients, loop over [dWax, dWaa, dWya, db, dby]. (≈2 lines)
     for gradient in [dWax, dWaa, dWya, db, dby]:
         np.clip(gradient,-1*maxValue,maxValue,out=gradient)
-        gradients['gradient'] = gradient
-        #None
-    ### END CODE HERE ###
+        gradients['gradient'] = gradient 
     
     gradients = {"dWaa": dWaa, "dWax": dWax, "dWya": dWya, "db": db, "dby": dby}
     
     return gradients
 
-
-# In[10]:
-
-np.random.seed(3)
-dWax = np.random.randn(5,3)*10
-dWaa = np.random.randn(5,5)*10
-dWya = np.random.randn(2,5)*10
-db = np.random.randn(5,1)*10
-dby = np.random.randn(2,1)*10
-gradients = {"dWax": dWax, "dWaa": dWaa, "dWya": dWya, "db": db, "dby": dby}
-gradients = clip(gradients, 10)
-print("gradients[\"dWaa\"][1][2] =", gradients["dWaa"][1][2])
-print("gradients[\"dWax\"][3][1] =", gradients["dWax"][3][1])
-print("gradients[\"dWya\"][1][2] =", gradients["dWya"][1][2])
-print("gradients[\"db\"][4] =", gradients["db"][4])
-print("gradients[\"dby\"][1] =", gradients["dby"][1])
-
-
+# In[14]:
 
 def sample(parameters, char_to_ix, seed):
     """
@@ -112,7 +93,7 @@ def sample(parameters, char_to_ix, seed):
     vocab_size = by.shape[0]
     n_a = Waa.shape[1]
     
-    ### START CODE HERE ###
+
     # Step 1: Create the one-hot vector x for the first character (initializing the sequence generation). (≈1 line)
     x = np.zeros((vocab_size,1))#None
     # Step 1': Initialize a_prev as zeros (≈1 line)
@@ -157,34 +138,16 @@ def sample(parameters, char_to_ix, seed):
         seed += 1
         counter +=1
         
-    ### END CODE HERE ###
-
     if (counter == 50):
         indices.append(char_to_ix['\n'])
     
     return indices
 
 
-# In[22]:
 
-np.random.seed(2)
-_, n_a = 20, 100
-Wax, Waa, Wya = np.random.randn(n_a, vocab_size), np.random.randn(n_a, n_a), np.random.randn(vocab_size, n_a)
-b, by = np.random.randn(n_a, 1), np.random.randn(vocab_size, 1)
-parameters = {"Wax": Wax, "Waa": Waa, "Wya": Wya, "b": b, "by": by}
+# ## 3 - Building the language model 
 
-
-indices = sample(parameters, char_to_ix, 0)
-print("Sampling:")
-print("list of sampled indices:", indices)
-print("list of sampled characters:", [ix_to_char[i] for i in indices])
-
-
-
-
-# In[27]:
-
-
+# In[10]:
 
 def optimize(X, Y, a_prev, parameters, learning_rate = 0.01):
     """
@@ -213,8 +176,6 @@ def optimize(X, Y, a_prev, parameters, learning_rate = 0.01):
     a[len(X)-1] -- the last hidden state, of shape (n_a, 1)
     """
     
-    ### START CODE HERE ###
-    
     # Forward propagate through time (≈1 line)
     loss, cache = rnn_forward(X,Y,a_prev,parameters)
     
@@ -226,38 +187,30 @@ def optimize(X, Y, a_prev, parameters, learning_rate = 0.01):
     
     # Update parameters (≈1 line)
     parameters = update_parameters(parameters,gradients,learning_rate)
-    
-    ### END CODE HERE ###
+
     
     return loss, gradients, a[len(X)-1]
 
 
-# In[28]:
 
-np.random.seed(1)
-vocab_size, n_a = 27, 100
-a_prev = np.random.randn(n_a, 1)
-Wax, Waa, Wya = np.random.randn(n_a, vocab_size), np.random.randn(n_a, n_a), np.random.randn(vocab_size, n_a)
-b, by = np.random.randn(n_a, 1), np.random.randn(vocab_size, 1)
-parameters = {"Wax": Wax, "Waa": Waa, "Wya": Wya, "b": b, "by": by}
-X = [12,3,5,11,22,3]
-Y = [4,14,11,22,25, 26]
+# ### 3.2 - Training the model 
 
-loss, gradients, a_last = optimize(X, Y, a_prev, parameters, learning_rate = 0.01)
-print("Loss =", loss)
-print("gradients[\"dWaa\"][1][2] =", gradients["dWaa"][1][2])
-print("np.argmax(gradients[\"dWax\"]) =", np.argmax(gradients["dWax"]))
-print("gradients[\"dWya\"][1][2] =", gradients["dWya"][1][2])
-print("gradients[\"db\"][4] =", gradients["db"][4])
-print("gradients[\"dby\"][1] =", gradients["dby"][1])
-print("a_last[4] =", a_last[4])
-
-
+# Given the dataset of place names, we use each line of the dataset (one name) as one training example. 
+# Every 100 steps of stochastic gradient descent, you will sample 10 randomly chosen names to see how the algorithm is doing.
+# Remember to shuffle the dataset, so that stochastic gradient descent visits the examples in random order. 
+# 
+# **Exercise**: Follow the instructions and implement `model()`. When `examples[index]` contains one dinosaur name (string), to create an example (X, Y), you can use this:
+# ```python
+#         index = j % len(examples)
+#         X = [None] + [char_to_ix[ch] for ch in examples[index]] 
+#         Y = X[1:] + [char_to_ix["\n"]]
+# ```
+# Note that we use: `index= j % len(examples)`, where `j = 1....num_iterations`, to make sure that `examples[index]` is always a valid statement (`index` is smaller than `len(examples)`).
+# The first entry of `X` being `None` will be interpreted by `rnn_forward()` as setting $x^{\langle 0 \rangle} = \vec{0}$. Further, this ensures that `Y` is equal to `X` but shifted one step to the left, and with an additional "\n" appended to signify the end of the dinosaur name. 
 
 # In[31]:
 
-
-def model(data, ix_to_char, char_to_ix, num_iterations = 35000, n_a = 50, dino_names = 7, vocab_size = 27):
+def model(data, ix_to_char, char_to_ix, num_iterations = 35000, n_a = 50, dino_names = 7, vocab_size = 64):
     """
     Trains the model and generates dinosaur names. 
     
@@ -284,9 +237,10 @@ def model(data, ix_to_char, char_to_ix, num_iterations = 35000, n_a = 50, dino_n
     loss = get_initial_loss(vocab_size, dino_names)
     
     # Build list of all dinosaur names (training examples).
-    with open("dinos.txt") as f:
+#    with open("amharic.txt") as f:
+    with io.open('amharic.txt', mode='r', encoding='utf-8') as f:
         examples = f.readlines()
-    examples = [x.lower().strip() for x in examples]
+    examples = [x.strip() for x in examples]
     
     # Shuffle list of all dinosaur names
     np.random.seed(0)
@@ -298,8 +252,6 @@ def model(data, ix_to_char, char_to_ix, num_iterations = 35000, n_a = 50, dino_n
     # Optimization loop
     for j in range(num_iterations):
         
-        ### START CODE HERE ###
-        
         # Use the hint above to define one training example (X,Y) (≈ 2 lines)
         index = j % len(examples)
         X = [None] + [char_to_ix[ch] for ch in examples[index]]
@@ -308,8 +260,6 @@ def model(data, ix_to_char, char_to_ix, num_iterations = 35000, n_a = 50, dino_n
         # Perform one optimization step: Forward-prop -> Backward-prop -> Clip -> Update parameters
         # Choose a learning rate of 0.01
         curr_loss, gradients, a_prev = optimize(X, Y, a_prev, parameters, learning_rate = 0.01)
-        
-        ### END CODE HERE ###
         
         # Use a latency trick to keep the loss smooth. It happens here to accelerate the training.
         loss = smooth(loss, curr_loss)
@@ -340,55 +290,6 @@ def model(data, ix_to_char, char_to_ix, num_iterations = 35000, n_a = 50, dino_n
 
 parameters = model(data, ix_to_char, char_to_ix)
 
-
-#
-# 
-# We have implemented a Shakespeare poem generator with Keras. Run the following cell to load the required packages and models. This may take a few minutes. 
-
-# In[ ]:
-
-from __future__ import print_function
-from keras.callbacks import LambdaCallback
-from keras.models import Model, load_model, Sequential
-from keras.layers import Dense, Activation, Dropout, Input, Masking
-from keras.layers import LSTM
-from keras.utils.data_utils import get_file
-from keras.preprocessing.sequence import pad_sequences
-from shakespeare_utils import *
-import sys
-import io
-
-
-# To save you some time, we have already trained a model for ~1000 epochs on a collection of Shakespearian poems called [*"The Sonnets"*](shakespeare.txt). 
-
-# Let's train the model for one more epoch. When it finishes training for an epoch---this will also take a few minutes---you can run `generate_output`, which will prompt asking you for an input (`<`40 characters). The poem will start with your sentence, and our RNN-Shakespeare will complete the rest of the poem for you! For example, try "Forsooth this maketh no sense " (don't enter the quotation marks). Depending on whether you include the space at the end, your results might also differ--try it both ways, and try other inputs as well. 
-# 
-
-# In[ ]:
-
-print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
-
-model.fit(x, y, batch_size=128, epochs=1, callbacks=[print_callback])
-
-
-# In[ ]:
-
-# Run this cell to try with different inputs without having to re-train the model 
-generate_output()
-
-
-# The RNN-Shakespeare model is very similar to the one you have built for dinosaur names. The only major differences are:
-# - LSTMs instead of the basic RNN to capture longer-range dependencies
-# - The model is a deeper, stacked LSTM model (2 layer)
-# - Using Keras instead of python to simplify the code 
-# 
-
-
-# **References**:
-# - This exercise took inspiration from Andrej Karpathy's implementation: https://gist.github.com/karpathy/d4dee566867f8291f086. To learn more about text generation, also check out Karpathy's [blog post](http://karpathy.github.io/2015/05/21/rnn-effectiveness/).
-# - For the Shakespearian poem generator, our implementation was based on the implementation of an LSTM text generator by the Keras team: https://github.com/keras-team/keras/blob/master/examples/lstm_text_generation.py 
-
-# In[ ]:
 
 
 
