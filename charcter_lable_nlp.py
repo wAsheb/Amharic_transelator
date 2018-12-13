@@ -17,15 +17,15 @@ def read():
 
 # In[2]:
 
-data = read() #open('dinos.txt', 'r').read()
-#data= data.lower()
+data = read() 
+
 chars = list(set(data))
 data_size, vocab_size = len(data), len(chars)
 print('There are %d total characters and %d unique characters in your data.' % (data_size, vocab_size))
 
 
 # The characters are ሀ - ፐ   (34*7 characters) plus the "\n" (or newline character), which, here plays a role similar to the `<EOS>` (or "End of sentence") token, 
-# In the cell below, we create a python dictionary (i.e., a hash table) to map each character to an index from 0-26. 
+# In the cell below, we create a python dictionary (i.e., a hash table) to map each character to an index from 0-238. 
 # We also create a second python dictionary that maps each index back to the corresponding character character. 
 # This will help you figure out what index corresponds to what character in the probability distribution output of the softmax layer.
 # Below, `char_to_ix` and `ix_to_char` are the python dictionaries. 
@@ -37,16 +37,11 @@ ix_to_char = { i:ch for i,ch in enumerate(sorted(chars)) }
 print(ix_to_char)
 
 
-# ### 1.2 - Overview of the model
+# # 1.2 - Overview of the model
 
 # - Initialize parameters 
 # - Run the optimization loop
-#     - Forward propagation to compute the loss function
-#     - Backward propagation to compute the gradients with respect to the loss function
-#     - Clip the gradients to avoid exploding gradients
-#     - Using the gradients, update your parameter with the gradient descent update rule.
-# - Return the learned parameters 
-#
+
 # In[10]:
 
 def clip(gradients, maxValue):
@@ -95,7 +90,7 @@ def sample(parameters, char_to_ix, seed):
     
 
     # Step 1: Create the one-hot vector x for the first character (initializing the sequence generation). (≈1 line)
-    x = np.zeros((vocab_size,1))#None
+    x = np.zeros((vocab_size,1))
     # Step 1': Initialize a_prev as zeros (≈1 line)
     a_prev = np.zeros((n_a,1))#None
     
@@ -118,9 +113,7 @@ def sample(parameters, char_to_ix, seed):
         z =np.matmul(Wya,a) + by
         y = softmax(z)
         
-        # for grading purposes
-        np.random.seed(counter+seed) 
-        
+            
         # Step 3: Sample the index of a character within the vocabulary from the probability distribution y
         idx = np.random.choice(list(range(y.shape[0])),p=y.ravel())
 
@@ -134,8 +127,7 @@ def sample(parameters, char_to_ix, seed):
         # Update "a_prev" to be "a"
         a_prev = a
         
-        # for grading purposes
-        seed += 1
+       
         counter +=1
         
     if (counter == 50):
@@ -145,7 +137,7 @@ def sample(parameters, char_to_ix, seed):
 
 
 
-# ## 3 - Building the language model 
+# # 3 - Building the language model 
 
 # In[10]:
 
@@ -199,7 +191,6 @@ def optimize(X, Y, a_prev, parameters, learning_rate = 0.01):
 # Every 100 steps of stochastic gradient descent, you will sample 10 randomly chosen names to see how the algorithm is doing.
 # Remember to shuffle the dataset, so that stochastic gradient descent visits the examples in random order. 
 # 
-# **Exercise**: Follow the instructions and implement `model()`. When `examples[index]` contains one dinosaur name (string), to create an example (X, Y), you can use this:
 # ```python
 #         index = j % len(examples)
 #         X = [None] + [char_to_ix[ch] for ch in examples[index]] 
@@ -242,7 +233,7 @@ def model(data, ix_to_char, char_to_ix, num_iterations = 35000, n_a = 50, dino_n
         examples = f.readlines()
     examples = [x.strip() for x in examples]
     
-    # Shuffle list of all dinosaur names
+    # Shuffle list of all place names
     np.random.seed(0)
     np.random.shuffle(examples)
     
@@ -284,7 +275,7 @@ def model(data, ix_to_char, char_to_ix, num_iterations = 35000, n_a = 50, dino_n
     return parameters
 
 
-# Run the following cell, you should observe your model outputting random-looking characters at the first iteration. After a few thousand iterations, your model should learn to generate reasonable-looking names. 
+# Run the following cell, model output random-looking characters at the first iteration. After a few thousand iterations, your model should learn to generate reasonable-looking names. 
 
 # In[32]:
 
