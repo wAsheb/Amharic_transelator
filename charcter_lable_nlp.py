@@ -24,7 +24,7 @@ data_size, vocab_size = len(data), len(chars)
 print('There are %d total characters and %d unique characters in your data.' % (data_size, vocab_size))
 
 
-# The characters are ሀ - ፐ   (34*7 characters) plus the "\n" (or newline character), which in this here plays a role similar to the `<EOS>` (or "End of sentence") token, 
+# The characters are ሀ - ፐ   (34*7 characters) plus the "\n" (or newline character), which, here plays a role similar to the `<EOS>` (or "End of sentence") token, 
 # In the cell below, we create a python dictionary (i.e., a hash table) to map each character to an index from 0-26. 
 # We also create a second python dictionary that maps each index back to the corresponding character character. 
 # This will help you figure out what index corresponds to what character in the probability distribution output of the softmax layer.
