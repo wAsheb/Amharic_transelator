@@ -26,26 +26,14 @@ get_ipython().magic('matplotlib inline')
 # In[4]:
 playSound("./raw_data/activates/1.wav")
 
-# In[5]:
-playSound("./raw_data/negatives/4.wav")
-
-# In[6]:
-
-
-playSound("./raw_data/backgrounds/1.wav")
-
-# In[7]:
-playSound("audio_examples/example_train.wav")
-
-
-# In[8]:
-
 x = graph_spectrogram("audio_examples/example_train.wav")
 
 
 # The graph above represents how active each frequency is (y axis) over a number of time-steps (x axis). 
 
-# The dimension of the output spectrogram depends upon the hyperparameters of the spectrogram software and the length of the input. In this notebook, we will be working with 10 second audio clips as the "standard length" for our training examples. The number of timesteps of the spectrogram will be 5511. You'll see later that the spectrogram will be the input $x$ into the network, and so $T_x = 5511$.
+# The dimension of the output spectrogram depends upon the hyperparameters of the spectrogram software and the length of the input. 
+# In this notebook, we will be working with 10 second audio clips as the "standard length" for our training examples. 
+# The number of timesteps of the spectrogram will be 5511. You'll see later that the spectrogram will be the input $x$ into the network, and so $T_x = 5511$.
 # 
 
 # In[9]:
@@ -53,7 +41,6 @@ x = graph_spectrogram("audio_examples/example_train.wav")
 _, data = wavfile.read("audio_examples/example_train.wav")
 print("Time steps in audio recording before spectrogram", data[:,0].shape)
 print("Time steps in input after spectrogram", x.shape)
-
 
 
 # In[10]:
@@ -77,9 +64,8 @@ print("activate[1] len: " + str(len(activates[1])))     # Different "activate" c
 
 # **Overlaying positive/negative words on the background**:
 
-# When you insert or overlay an "activate" clip, you will also update labels for $y^{\langle t \rangle}$, so that 50 steps of the output now have target label 1. You will train a GRU to detect when someone has *finished* saying "activate". For example, suppose the synthesized "activate" clip ends at the 5sec mark in the 10sec audio---exactly halfway into the clip. Recall that $T_y = 1375$, so timestep $687 = $ `int(1375*0.5)` corresponds to the moment at 5sec into the audio. So, you will set $y^{\langle 688 \rangle} = 1$. Further, you would quite satisfied if the GRU detects "activate" anywhere within a short time-internal after this moment, so we actually set 50 consecutive values of the label $y^{\langle t \rangle}$ to 1. Specifically, we have $y^{\langle 688 \rangle} = y^{\langle 689 \rangle} = \cdots = y^{\langle 737 \rangle} = 1$.  
-# 
-# This is another reason for synthesizing the training data: It's relatively straightforward to generate these labels $y^{\langle t \rangle}$ as described above. In contrast, if you have 10sec of audio recorded on a microphone, it's quite time consuming for a person to listen to it and mark manually exactly when "activate" finished. 
+# This is another reason for synthesizing the training data: 
+# In contrast, if you have 10sec of audio recorded on a microphone, it's quite time consuming for a person to listen to it and mark manually exactly when "activate" finished. 
 
 
 # In[13]:
@@ -100,8 +86,6 @@ def get_random_time_segment(segment_ms):
     
     return (segment_start, segment_end)
 
-
-#
 # In[14]:
 
 # is_overlapping
@@ -132,8 +116,6 @@ def is_overlapping(segment_time, previous_segments):
 
 
     return overlap
-
-
 
 # In[16]:
 
@@ -217,13 +199,6 @@ arr1 = insert_ones(np.zeros((1, Ty)), 9700)
 plt.plot(insert_ones(arr1, 4251)[0,:])
 print("sanity checks:", arr1[0][1333], arr1[0][634], arr1[0][635])
 
-
-
-# 1. Initialize the label vector $y$ as a numpy array of zeros and shape $(1, T_y)$.
-# 2. Initialize the set of existing segments to an empty list.
-# 3. Randomly select 0 to 4 "activate" audio clips, and insert them onto the 10sec clip. Also insert labels at the correct position in the label vector $y$.
-# 4. Randomly select 0 to 2 negative audio clips, and insert them into the 10sec clip. 
-# 
 
 # In[21]:
 
@@ -357,19 +332,12 @@ from keras.optimizers import Adam
 # ## 2.1 - Build the model
 # 
 # Here is the architecture we will use. Take some time to look over the model and see if it makes sense. 
-# 
-# <img src="images/model.png" style="width:600px;height:600px;">
-# <center> **Figure 3** </center>
-# 
-# One key step of this model is the 1D convolutional step (near the bottom of Figure 3). It inputs the 5511 step spectrogram, and outputs a 1375 step output, which is then further processed by multiple layers to get the final $T_y = 1375$ step output. This layer plays a role similar to the 2D convolutions you saw in Course 4, of extracting low-level features and then possibly generating an output of a smaller dimension. 
-# 
-# Computationally, the 1-D conv layer also helps speed up the model because now the GRU  has to process only 1375 timesteps rather than 5511 timesteps. The two GRU layers read the sequence of inputs from left to right, then ultimately uses a dense+sigmoid layer to make a prediction for $y^{\langle t \rangle}$. Because $y$ is binary valued (0 or 1), we use a sigmoid output at the last layer to estimate the chance of the output being 1, corresponding to the user having just said "activate."
-# 
-# Note that we use a uni-directional RNN rather than a bi-directional RNN. This is really important for trigger word detection, since we want to be able to detect the trigger word almost immediately after it is said. If we used a bi-directional RNN, we would have to wait for the whole 10sec of audio to be recorded before we could tell if "activate" was said in the first second of the audio clip.  
-# 
+
+# Note that we use a uni-directional RNN rather than a bi-directional RNN. 
+# This is really important for trigger word detection, since we want to be able to detect the trigger word almost immediately after it is said. If we used a bi-directional RNN, we would have to wait for the whole 10sec of audio to be recorded before we could tell if "activate" was said in the first second of the audio clip.  
 
 # Implementing the model can be done in four steps:
-#
+
 # In[29]:
 
 def model(input_shape):
@@ -416,10 +384,7 @@ def model(input_shape):
 
 model = model(input_shape = (Tx, n_freq))
 
-
-# Let's print the model summary to keep track of the shapes.
-
-# In[31]:
+# print model summary
 
 model.summary()
 
@@ -430,8 +395,7 @@ model.summary()
 model = load_model('./models/tr_model.h5')
 
 
-# You can train the model further, using the Adam optimizer and binary cross entropy loss, as follows. This will run quickly because we are training just for one epoch and with a small training set of 26 examples. 
-
+# You can train the model further, using the Adam optimizer and binary cross entropy loss, as follows. 
 # In[33]:
 
 opt = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, decay=0.01)
@@ -443,11 +407,7 @@ model.compile(loss='binary_crossentropy', optimizer=opt, metrics=["accuracy"])
 model.fit(X, Y, batch_size = 5, epochs=1)
 
 
-# ## 2.3 - Test the model
-# 
 # Finally, let's see how your model performs on the dev set.
-
-# In[35]:
 
 loss, acc = model.evaluate(X_dev, Y_dev)
 print("Dev set accuracy = ", acc)
@@ -531,7 +491,8 @@ playSound("./test_amharic.wav")
 
 
 
-# Record a 10 second audio clip of you saying the word "activate" and other random words, and upload it to the Coursera hub as `myaudio.wav`. Be sure to upload the audio as a wav file. If your audio is recorded in a different format (such as mp3) there is free software that you can find online for converting it to wav. If your audio recording is not 10 seconds, the code below will either trim or pad it as needed to make it 10 seconds. 
+# Record a 10 second audio clip of you saying the word "activate" and other random words, 
+# Be sure to upload the audio as a wav file.If your audio recording is not 10 seconds, the code below will either trim or pad it as needed to make it 10 seconds. 
 # 
 
 # In[42]:
@@ -548,7 +509,7 @@ def preprocess_audio(filename):
     segment.export(filename, format='wav')
 
 
-# Once you've uploaded your audio file to Coursera, put the path to your file in the variable below.
+# Once you've uploaded your audio file, put the path to your file in the variable below.
 
 # In[43]:
 
@@ -561,7 +522,8 @@ preprocess_audio(your_filename)
 playSound(your_filename) # listen to the audio you uploaded 
 
 
-# Finally, use the model to predict when you say activate in the 10 second audio clip, and trigger a chime. If beeps are not being added appropriately, try to adjust the chime_threshold.
+# Finally, use the model to predict when you say activate in the 10 second audio clip, and trigger a chime. 
+# If beeps are not being added appropriately, try to adjust the chime_threshold.
 
 # In[45]:
 
